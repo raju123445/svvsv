@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Teacher Content Gathering Form</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background-color: #fcfcfc;
+        }
+        legend {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #3498db;
+            padding: 0 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input[type="text"],
+        input[type="number"],
+        input[type="url"],
+        input[type="tel"],
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .checkbox-group, .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 5px 0;
+        }
+        .checkbox-group label, .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        button {
+            display: block;
+            width: 100%;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        /* Output Section Styles */
+        #display-section {
+            margin-top: 40px;
+            background: #eef9f2;
+            border: 2px dashed #2ecc71;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .output-data {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #d4edda;
+        }
+        .output-item {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .output-item strong {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Music Teacher Information Form</h1>
+    <p style="text-align: center; color: #7f8c8d;">Phase 1: Gather Content First</p>
+
+    <form id="musicTeacherForm">
+        
+        <fieldset>
+            <legend>1. Music Teacher Information</legend>
+            
+            <div class="form-group">
+                <label for="fullName">Full Name:</label>
+                <input type="text" id="fullName" name="fullName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="profilePhoto">Profile Photo:</label>
+                <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="qualification">Qualification (M-Music details):</label>
+                <textarea id="qualification" name="qualification" rows="2" placeholder="Degrees, Diplomas, or traditional training details..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="experience">Years of Experience:</label>
+                <input type="number" id="experience" name="experience" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Specialization:</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="specialization" value="Vocal"> Vocal</label>
+                    <label><input type="checkbox" name="specialization" value="Classical"> Classical</label>
+                    <label><input type="checkbox" name="specialization" value="Light Music"> Light Music</label>
+                    <label><input type="checkbox" name="specialization" value="Bhajans"> Bhajans</label>
+                    <label><input type="checkbox" name="specialization" value="Film Songs"> Film Songs</label>
+                    <label><input type="checkbox" name="specialization" value="Instruments"> Instruments</label>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>2. Achievements (Trust Building)</legend>
+            
+            <div class="form-group">
+                <label for="stageShows">Number of Stage Shows Performed:</label>
+                <input type="number" id="stageShows" name="stageShows" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="achievementFiles">Upload Achievement Media (Function photos, Event posters, Award photos, Certificates):</label>
+                <input type="file" id="achievementFiles" name="achievementFiles" accept="image/*,.pdf" multiple>
+            </div>
+
+            <div class="form-group">
+                <label for="performanceVideos">Links to Performance Videos (YouTube / Drive):</label>
+                <textarea id="performanceVideos" name="performanceVideos" rows="2" placeholder="Paste links here, separated by commas"></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>3. Student Success Stories</legend>
+            
+            <div class="form-group">
+                <label for="studentPhotos">Student Photos / Competition Winners:</label>
+                <input type="file" id="studentPhotos" name="studentPhotos" accept="image/*" multiple>
+            </div>
+
+            <div class="form-group">
+                <label for="testimonials">Testimonials & Parent Feedback:</label>
+                <textarea id="testimonials" name="testimonials" rows="4" placeholder="Paste student or parent testimonials here..."></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>4. Contact Details</legend>
+            
+            <div class="form-group">
+                <label for="mobileNumber">Mobile Number:</label>
+                <input type="tel" id="mobileNumber" name="mobileNumber" required>
+            </div>
+
+            <div class="form-group">
+                <label for="whatsappNumber">WhatsApp Number:</label>
+                <input type="tel" id="whatsappNumber" name="whatsappNumber">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" rows="2" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="googleMaps">Google Maps Location Link:</label>
+                <input type="url" id="googleMaps" name="googleMaps" placeholder="https://maps.app.goo.gl/...">
+            </div>
+
+            <div class="form-group">
+                <label for="socialLinks">Social Media Links:</label>
+                <textarea id="socialLinks" name="socialLinks" rows="2" placeholder="Facebook, Instagram, YouTube channel links..."></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>5. Course Information</legend>
+            
+            <div class="form-group">
+                <label>Courses Offered:</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="courses" value="Beginner Course"> Beginner Course</label>
+                    <label><input type="checkbox" name="courses" value="Intermediate Course"> Intermediate Course</label>
+                    <label><input type="checkbox" name="courses" value="Advanced Course"> Advanced Course</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Class Mode:</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="classMode" value="Online Classes"> Online Classes</label>
+                    <label><input type="checkbox" name="classMode" value="Offline Classes"> Offline Classes</label>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>6. Gallery Assets (Bulk Collection)</legend>
+            <p style="font-size: 0.85em; color: #e67e22; margin-top: -10px; margin-bottom: 15px;">
+                * Target to collect: 20–30 photos, 5–10 videos, certificates, and event banners.
+            </p>
+            
+            <div class="form-group">
+                <label for="galleryPhotos">Bulk Upload Photos & Banners:</label>
+                <input type="file" id="galleryPhotos" name="galleryPhotos" accept="image/*" multiple>
+            </div>
+
+            <div class="form-group">
+                <label for="galleryVideos">Bulk Upload Videos / Document Links:</label>
+                <textarea id="galleryVideos" name="galleryVideos" rows="3" placeholder="Provide video URLs or links to shared Cloud/Drive folders here..."></textarea>
+            </div>
+        </fieldset>
+
+        <button type="submit">Submit and Display Data Below</button>
+    </form>
+
+    <div id="display-section">
+        <h2>Submitted Information Preview</h2>
+        <div id="outputContent" class="output-data"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('musicTeacherForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop standard form refresh
+        
+        const formData = new FormData(this);
+        let outputHTML = '';
+
+        // Helper function to pull checkbox items
+        const getCheckboxes = (name) => {
+            return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value).join(', ') || 'None selected';
+        };
+
+        // Helper function to grab list of filenames
+        const getFileNames = (id) => {
+            const files = document.getElementById(id).files;
+            if(files.length === 0) return 'No files selected';
+            return Array.from(files).map(f => f.name).join(', ');
+        };
+
+        // Build HTML output dynamically
+        outputHTML += `<div class="output-item"><strong>Full Name:</strong> ${document.getElementById('fullName').value}</div>`;
+        outputHTML += `<div class="output-item"><strong>Profile Photo:</strong> ${getFileNames('profilePhoto')}</div>`;
+        outputHTML += `<div class="output-item"><strong>Qualifications:</strong> ${document.getElementById('qualification').value || 'N/A'}</div>`;
+        outputHTML += `<div class="output-item"><strong>Years of Experience:</strong> ${document.getElementById('experience').value || 'N/A'}</div>`;
+        outputHTML += `<div class="output-item"><strong>Specializations:</strong> ${getCheckboxes('specialization')}</div>`;
+        
+        outputHTML += `<h3>Achievements</h3>`;
+        outputHTML += `<div class="output-item"><strong>Stage Shows:</strong> ${document.getElementById('stageShows').value || 0}</div>`;
+        outputHTML += `<div class="output-item"><strong>Achievement Media Files:</strong> ${getFileNames('achievementFiles')}</div>`;
+        outputHTML += `<div class="output-item"><strong>Performance Links:</strong> ${document.getElementById('performanceVideos').value || 'N/A'}</div>`;
+
+        outputHTML += `<h3>Student Success</h3>`;
+        outputHTML += `<div class="output-item"><strong>Student Media Files:</strong> ${getFileNames('studentPhotos')}</div>`;
+        outputHTML += `<div class="output-item"><strong>Testimonials:</strong> ${document.getElementById('testimonials').value || 'N/A'}</div>`;
+
+        outputHTML += `<h3>Contact Details</h3>`;
+        outputHTML += `<div class="output-item"><strong>Mobile:</strong> ${document.getElementById('mobileNumber').value}</div>`;
+        outputHTML += `<div class="output-item"><strong>WhatsApp:</strong> ${document.getElementById('whatsappNumber').value || 'N/A'}</div>`;
+        outputHTML += `<div class="output-item"><strong>Address:</strong> ${document.getElementById('address').value}</div>`;
+        outputHTML += `<div class="output-item"><strong>Google Maps:</strong> <a href="${document.getElementById('googleMaps').value}" target="_blank">${document.getElementById('googleMaps').value || 'N/A'}</a></div>`;
+        outputHTML += `<div class="output-item"><strong>Social Media:</strong> ${document.getElementById('socialLinks').value || 'N/A'}</div>`;
+
+        outputHTML += `<h3>Course Info</h3>`;
+        outputHTML += `<div class="output-item"><strong>Levels:</strong> ${getCheckboxes('courses')}</div>`;
+        outputHTML += `<div class="output-item"><strong>Modes:</strong> ${getCheckboxes('classMode')}</div>`;
+
+        outputHTML += `<h3>Gallery Assets</h3>`;
+        outputHTML += `<div class="output-item"><strong>Bulk Photos uploaded:</strong> ${getFileNames('galleryPhotos')}</div>`;
+        outputHTML += `<div class="output-item"><strong>Bulk Video/Drive Links:</strong> ${document.getElementById('galleryVideos').value || 'N/A'}</div>`;
+
+        // Render to DOM and reveal section
+        const displaySection = document.getElementById('display-section');
+        document.getElementById('outputContent').innerHTML = outputHTML;
+        displaySection.style.display = 'block';
+        
+        // Smooth scroll to the output section
+        displaySection.scrollIntoView({ behavior: 'smooth' });
+    });
+</script>
+
+</body>
+</html>
