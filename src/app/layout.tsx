@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Noto_Sans_Kannada, Plus_Jakarta_Sans, Baloo_Tamma_2, Geist } from "next/font/google";
 import "./globals.css";
 import { LocalBusinessSchema } from "./components/seo/LocalBusinessSchema";
-import { cn } from "@/lib/utils";
+import { ImmersiveScene } from "./components/three/ImmersiveScene";
+import { FloatingParticles } from "./components/ui/FloatingParticles";
+import { cn } from "@/app/lib/animations";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const kannada = Noto_Sans_Kannada({
   subsets: ["kannada"],
@@ -26,8 +28,15 @@ const baloo = Baloo_Tamma_2({
 
 export const metadata: Metadata = {
   title: "Sri Veena Vani Sangeetha Vidyalaya | Chaitra Dambal",
-  description: "Premier Music Academy in Muddebihal. Learn Classical, Light Music, and Instruments from Vidvath Chaitra Dambal.",
-  keywords: ["Music Classes Muddebihal", "Classical Music", "Vocal Training", "Chaitra Dambal", "Veena Vani Sangeetha Vidyalaya"],
+  description:
+    "Premier Music Academy in Muddebihal. Learn Classical, Light Music, and Instruments from Vidvath Chaitra Dambal.",
+  keywords: [
+    "Music Classes Muddebihal",
+    "Classical Music",
+    "Vocal Training",
+    "Chaitra Dambal",
+    "Veena Vani Sangeetha Vidyalaya",
+  ],
 };
 
 export default function RootLayout({
@@ -38,11 +47,30 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", "scroll-smooth", kannada.variable, jakarta.variable, baloo.variable, "font-sans", geist.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        "scroll-smooth",
+        kannada.variable,
+        jakarta.variable,
+        baloo.variable,
+        "font-sans",
+        geist.variable
+      )}
     >
-      <body className="min-h-full flex flex-col bg-surface text-foreground font-jakarta">
+      <body className="min-h-full flex flex-col bg-surface text-foreground font-jakarta relative">
         <LocalBusinessSchema />
-        {children}
+
+        {/* Fixed 3D background canvas */}
+        <ImmersiveScene />
+
+        {/* Site-wide floating CSS particles */}
+        <FloatingParticles />
+
+        {/* Page content */}
+        <div className="relative z-0">
+          {children}
+        </div>
       </body>
     </html>
   );

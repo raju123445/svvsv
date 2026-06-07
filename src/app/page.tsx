@@ -2,7 +2,7 @@ import { Navbar } from "./components/ui/Navbar";
 import { Hero } from "./components/sections/Hero";
 import { AboutGuru } from "./components/sections/AboutGuru";
 import { AcademyStats } from "./components/sections/AcademyStats";
-import { AchievementsGallery } from "./components/sections/AchievementsGallery";
+import { Achievements3D } from "./components/sections/Achievements3D";
 import { PerformanceVideos } from "./components/sections/PerformanceVideos";
 import { Courses } from "./components/sections/Courses";
 import { ContactFooter } from "./components/sections/ContactFooter";
@@ -14,7 +14,7 @@ export default function Home() {
       <Hero />
       <AboutGuru />
       <AcademyStats />
-      <AchievementsGallery />
+      <Achievements3D />
       <PerformanceVideos />
       <Courses />
       <ContactFooter />
