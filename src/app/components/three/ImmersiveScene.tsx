@@ -6,7 +6,7 @@ import { FloatingNotes } from "./FloatingNotes";
 import { SoundWaveRibbon } from "./SoundWave";
 import { Veena3D } from "./Veena3D";
 import { AnimatedSoundWaveBackground } from "./AnimatedSoundWaveBackground";
-import { Environment, Sparkles, Fog } from "@react-three/drei";
+import { Environment, Sparkles } from "@react-three/drei";
 
 export const ImmersiveScene = () => {
   return (
