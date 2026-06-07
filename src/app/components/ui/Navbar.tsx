@@ -1,18 +1,25 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Music } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
 
-  useEffect(() => {
-    return scrollY.onChange((latest) => {
-      setIsScrolled(latest > 50);
+  // useMotionValueEvent fires synchronously on Framer's internal RAF tick,
+  // NOT on the main-thread scroll event — so it never blocks the scrollport.
+  // The functional state update (prev => next) avoids extra renders when value
+  // stays the same.
+  const handleScrollChange = useCallback((latest: number) => {
+    setIsScrolled((prev) => {
+      const next = latest > 50;
+      return prev === next ? prev : next;
     });
-  }, [scrollY]);
+  }, []);
+
+  useMotionValueEvent(scrollY, "change", handleScrollChange);
 
   const navLinks = [
     { name: "About", href: "#about" },
@@ -53,7 +60,7 @@ export const Navbar = () => {
             ))}
           </div>
 
-          <a 
+          <a
             href="#courses"
             className="px-6 py-2 bg-secondary text-primary text-xs font-bold rounded-full hover:scale-105 transition-transform"
           >

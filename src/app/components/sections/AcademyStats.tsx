@@ -6,6 +6,7 @@ import { useInView } from "react-intersection-observer";
 import { GlassCard } from "../ui/GlassCard";
 import { SoundWaveCSS } from "@/app/components/ui/SoundWaveCSS";
 import { useRef } from "react";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const stats = [
   {
@@ -44,13 +45,20 @@ const stats = [
 
 export const AcademyStats = () => {
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
   const { ref, inView } = useInView({ threshold: 0.3, triggerOnce: true });
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], ["20px", "-20px"]);
+
+  // Disable parallax on mobile
+  const y = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["0px", "0px"] : ["20px", "-20px"]
+  );
 
   return (
     <section

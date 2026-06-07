@@ -8,17 +8,28 @@ import { teacherData } from "@/app/data/teacher";
 import { fadeUp, staggerContainer } from "@/app/lib/animations";
 import { Award, BookOpen, Music, Star } from "lucide-react";
 import { useRef } from "react";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 export const AboutGuru = () => {
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
 
-  // Parallax: image column moves up as section scrolls into view
-  const imageY = useTransform(scrollYProgress, [0, 1], ["60px", "-60px"]);
-  const contentY = useTransform(scrollYProgress, [0, 1], ["30px", "-30px"]);
+  // Disable parallax on mobile — compositor jank source
+  const imageY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["0px", "0px"] : ["60px", "-60px"]
+  );
+  const contentY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["0px", "0px"] : ["30px", "-30px"]
+  );
 
   return (
     <section
@@ -74,12 +85,16 @@ export const AboutGuru = () => {
               }}
             >
               <div className="relative w-full h-full rounded-3xl overflow-hidden">
+                {/*
+                  Remove priority — this image is well below the fold (after Hero).
+                  Add sizes so Next.js picks the right resolution for each screen width.
+                */}
                 <Image
                   src={teacherData.image}
                   alt={teacherData.name}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 400px"
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
-                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-60" />
 

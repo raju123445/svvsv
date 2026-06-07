@@ -1,5 +1,3 @@
-"use client";
-
 export const LocalBusinessSchema = () => {
   const schema = {
     "@context": "https://schema.org",

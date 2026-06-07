@@ -1,51 +1,93 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
-import { useRef, useMemo } from "react";
+import { useFrame, extend } from "@react-three/fiber";
+import React, { useRef, useMemo } from "react";
+import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-export const SoundWave = () => {
-  const meshRef = useRef<THREE.Mesh>(null!);
-  
+/**
+ * SoundWave — GPU-driven ribbon wave.
+ *
+ * Original: CPU loop updating Y positions every frame + buffer re-upload.
+ * Optimized: static geometry; uTime uniform passed to vertex shader.
+ * The GPU calculates the sine wave in parallel across all vertices.
+ */
+
+// ── Shader material ─────────────────────────────────────────────────────────
+const WaveLineMaterial = shaderMaterial(
+  { uTime: 0, uColor: new THREE.Color("#D4AF37") },
+  /*glsl*/ `
+    uniform float uTime;
+    void main() {
+      vec3 pos = position;
+      // Same formula as original: y = sin(x*2 + t*3)*0.5 + cos(x*3 + t*2)*0.3
+      pos.y = sin(pos.x * 2.0 + uTime * 3.0) * 0.5
+            + cos(pos.x * 3.0 + uTime * 2.0) * 0.3;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `,
+  /*glsl*/ `
+    uniform vec3  uColor;
+    void main() {
+      gl_FragColor = vec4(uColor, 0.2);
+    }
+  `
+);
+
+extend({ WaveLineMaterial });
+
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    waveLineMaterial: {
+      ref?: React.Ref<THREE.ShaderMaterial & { uTime: number }>;
+      uTime?: number;
+      uColor?: THREE.Color;
+      attach?: string;
+      transparent?: boolean;
+      depthWrite?: boolean;
+    };
+  }
+}
+
+// ── Single wave line ─────────────────────────────────────────────────────────
+const SoundWave = () => {
+  const matRef = useRef<THREE.ShaderMaterial & { uTime: number }>(null!);
+
   const count = 100;
   const sep = 0.2;
-  
-  const positions = useMemo(() => {
+
+  // Static geometry — positions never change on CPU
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (i - count / 2) * sep;
+      pos[i * 3]     = (i - count / 2) * sep;
       pos[i * 3 + 1] = 0;
       pos[i * 3 + 2] = 0;
     }
-    return pos;
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    return geo;
   }, []);
 
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime();
-    const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
-    
-    for (let i = 0; i < count; i++) {
-      const x = positions[i * 3];
-      // Create wave effect
-      positions[i * 3 + 1] = Math.sin(x * 2 + time * 3) * 0.5 + Math.cos(x * 3 + time * 2) * 0.3;
+  // Only update the uTime uniform each frame — no buffer uploads
+  useFrame(({ clock }) => {
+    if (matRef.current) {
+      matRef.current.uTime = clock.getElapsedTime();
     }
-    
-    meshRef.current.geometry.attributes.position.needsUpdate = true;
   });
 
   return (
-    <mesh ref={meshRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-      </bufferGeometry>
-      <meshBasicMaterial color="#D4AF37" wireframe transparent opacity={0.2} />
+    <mesh geometry={geometry}>
+      <waveLineMaterial
+        ref={matRef}
+        transparent
+        depthWrite={false}
+      />
     </mesh>
   );
 };
 
+// ── Ribbon (5 stacked waves) ─────────────────────────────────────────────────
 export const SoundWaveRibbon = () => {
   const count = 5;
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 interface BarData {
   minH: number;
@@ -25,12 +26,15 @@ export const SoundWaveCSS = ({
   className = "",
   variant = "hero",
 }: SoundWaveCSSProps) => {
-  // Generate bars only on client to avoid hydration mismatch (Math.random)
   const [bars, setBars] = useState<BarData[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    const generated = Array.from({ length: barCount }).map((_, i) => {
-      const progress = i / (barCount - 1); // 0 → 1
+    // On mobile halve the bar count — each bar has an animated box-shadow which is GPU-heavy
+    const effectiveCount = isMobile ? Math.max(6, Math.floor(barCount / 2)) : barCount;
+
+    const generated = Array.from({ length: effectiveCount }).map((_, i) => {
+      const progress = i / (effectiveCount - 1); // 0 → 1
       const baseHeight = Math.sin(progress * Math.PI) * 0.8 + 0.2;
       const minH = Math.round(baseHeight * height * 0.2);
       const maxH = Math.round(baseHeight * height);
@@ -46,7 +50,7 @@ export const SoundWaveCSS = ({
       return { minH, maxH, duration, delay, r, g, b };
     });
     setBars(generated);
-  }, [barCount, height]);
+  }, [barCount, height, isMobile]);
 
   const opacity = variant === "subtle" ? 0.15 : variant === "accent" ? 0.5 : 0.7;
 
@@ -77,7 +81,10 @@ export const SoundWaveCSS = ({
             height: `${bar.maxH}px`,
             borderRadius: "2px",
             background: `rgb(${bar.r},${bar.g},${bar.b})`,
-            boxShadow: `0 0 6px rgba(${bar.r},${bar.g},${bar.b},0.5)`,
+            // Skip box-shadow on mobile — massively reduces per-frame rasterization
+            boxShadow: isMobile
+              ? "none"
+              : `0 0 6px rgba(${bar.r},${bar.g},${bar.b},0.5)`,
             transformOrigin: "bottom center",
             flexShrink: 0,
             animationName: "sound-bar",

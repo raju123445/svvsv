@@ -4,11 +4,13 @@ import { teacherData } from "@/app/data/teacher";
 import { motion } from "framer-motion";
 import { Instagram, MapPin, MessageCircle, Navigation, Phone, Youtube } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
+import { useMemo } from "react";
 
-// Upward-drifting ambient particles
-const FooterParticles = () => (
+// Upward-drifting ambient particles — count is controlled by parent
+const FooterParticles = ({ count }: { count: number }) => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-    {Array.from({ length: 25 }).map((_, i) => {
+    {Array.from({ length: count }).map((_, i) => {
       const size = 2 + Math.random() * 4;
       const left = Math.random() * 100;
       const delay = Math.random() * -10;
@@ -26,15 +28,16 @@ const FooterParticles = () => (
             background: isGold
               ? `rgba(212,175,55,${0.2 + Math.random() * 0.4})`
               : `rgba(147,51,234,${0.2 + Math.random() * 0.4})`,
-            boxShadow: isGold
-              ? `0 0 ${size * 3}px rgba(212,175,55,0.4)`
-              : `0 0 ${size * 3}px rgba(147,51,234,0.4)`,
+            // Skip glow box-shadow on mobile — not visible at that size
+            boxShadow: `0 0 ${size * 3}px ${
+              isGold ? "rgba(212,175,55,0.4)" : "rgba(147,51,234,0.4)"
+            }`,
             animationName: "particle-drift",
             animationDuration: `${duration}s`,
             animationDelay: `${delay}s`,
             animationTimingFunction: "ease-out",
             animationIterationCount: "infinite",
-            "--drift-x": `${(Math.random() - 0.5) * 80}`,
+            ["--drift-x" as string]: `${(Math.random() - 0.5) * 80}`,
           } as React.CSSProperties}
         />
       );
@@ -43,10 +46,14 @@ const FooterParticles = () => (
 );
 
 export const ContactFooter = () => {
+  const isMobile = useIsMobile();
+  // Fewer particles on mobile — each has a box-shadow and CSS animation
+  const particleCount = useMemo(() => (isMobile ? 10 : 20), [isMobile]);
+
   return (
     <footer id="contact" className="bg-surface pt-24 pb-12 relative overflow-hidden">
       {/* Ambient particles */}
-      <FooterParticles />
+      <FooterParticles count={particleCount} />
 
       {/* Background Decor */}
       <div className="absolute bottom-0 left-0 w-full h-[400px] bg-gradient-to-t from-primary/20 to-transparent -z-10" />
@@ -127,13 +134,13 @@ export const ContactFooter = () => {
                     style={{
                       border: "1px solid rgba(255,255,255,0.1)",
                     }}
-                    onMouseEnter={e => {
+                    onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLElement;
                       el.style.color = social.hoverColor;
                       el.style.borderColor = `${social.hoverColor}50`;
                       el.style.boxShadow = `0 0 20px ${social.hoverColor}50`;
                     }}
-                    onMouseLeave={e => {
+                    onMouseLeave={(e) => {
                       const el = e.currentTarget as HTMLElement;
                       el.style.color = "rgba(255,255,255,0.6)";
                       el.style.borderColor = "rgba(255,255,255,0.1)";
@@ -168,6 +175,7 @@ export const ContactFooter = () => {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
+                  title="Academy location on Google Maps"
                 />
                 <a
                   href={teacherData.googleMaps}
@@ -215,6 +223,7 @@ export const ContactFooter = () => {
         transition={{ delay: 1, type: "spring" }}
         className="fixed bottom-6 right-6 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center z-50 group hover:scale-110 transition-transform"
         style={{ boxShadow: "0 0 20px rgba(34,197,94,0.4), 0 0 40px rgba(34,197,94,0.2)" }}
+        aria-label="WhatsApp Inquiry"
       >
         <MessageCircle className="w-8 h-8 text-white fill-current" />
         <div className="absolute right-20 bg-white text-primary text-xs font-bold py-2 px-4 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">

@@ -6,21 +6,29 @@ import { Music, MessageCircle, Play, ChevronRight } from "lucide-react";
 import { teacherData } from "@/app/data/teacher";
 import { useRef } from "react";
 import { SoundWaveCSS } from "@/app/components/ui/SoundWaveCSS";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 export const Hero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  // Reduced Y to 12% so content never travels far enough to reveal the next section
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.97]);
-  const blur = useTransform(scrollYProgress, [0.4, 1], [0, 6]);
+  // Disable parallax transforms on mobile — scroll listeners on mobile browser
+  // run on the main thread and cause compositor jank. Static 0 values
+  // unsubscribe from the motion value entirely.
+  const yRaw = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["0%", "0%"] : ["0%", "12%"]
+  );
+  const opacity = useTransform(scrollYProgress, [0, 0.65], [1, isMobile ? 1 : 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, isMobile ? 1 : 0.97]);
 
-  const springY = useSpring(y, { stiffness: 80, damping: 20 });
+  const springY = useSpring(yRaw, { stiffness: 80, damping: 20 });
 
   return (
     <section
@@ -47,7 +55,7 @@ export const Hero = () => {
             top: `${15 + (i % 3) * 20}%`,
             color: i % 2 === 0 ? "rgba(212,175,55,0.12)" : "rgba(147,51,234,0.12)",
             fontSize: `${24 + i * 8}px`,
-            animationName: `particle-float-${i * 7}`,
+            animationName: `pfloat-${i * 7}`,
             animationDuration: `${5 + i * 1.5}s`,
             animationTimingFunction: "ease-in-out",
             animationIterationCount: "infinite",
@@ -129,7 +137,7 @@ export const Hero = () => {
             variants={fadeUp}
             className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
-            {/* Primary CTA — animated gradient border */}
+            {/* Primary CTA */}
             <a
               href="#courses"
               className="group relative px-10 py-5 font-bold rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 flex items-center gap-3"
@@ -155,7 +163,7 @@ export const Hero = () => {
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
             </a>
 
-            {/* Secondary CTA — glass with gradient border */}
+            {/* Secondary CTA */}
             <a
               href={`https://wa.me/91${teacherData.socials.whatsapp}`}
               target="_blank"
@@ -168,7 +176,6 @@ export const Hero = () => {
                 boxShadow: "0 0 30px rgba(147,51,234,0.15)",
               }}
             >
-              {/* Animated border glow on hover */}
               <div
                 className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{
@@ -190,10 +197,11 @@ export const Hero = () => {
         </motion.div>
       </motion.div>
 
-      {/* Ambient Blobs */}
+      {/* Ambient Blobs — use blur only on desktop */}
       <div className="absolute top-1/4 left-10 w-72 h-72 bg-secondary/8 rounded-full blur-[140px] -z-10 animate-pulse-slow" />
       <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-primary/25 rounded-full blur-[160px] -z-10 animate-pulse-slow" />
-      <div className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full blur-[100px] -z-10"
+      <div
+        className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full blur-[100px] -z-10"
         style={{ background: "rgba(147,51,234,0.12)", animation: "glow-pulse 5s ease-in-out infinite" }}
       />
 
@@ -207,7 +215,8 @@ export const Hero = () => {
         <span className="text-[10px] uppercase tracking-[0.4em] font-bold">Discover</span>
         <div className="w-px h-16 bg-gradient-to-b from-secondary/60 via-white/20 to-transparent" />
       </motion.div>
-      {/* ── Solid bottom gradient mask — prevents next section from bleeding through ── */}
+
+      {/* Bottom gradient mask */}
       <div
         className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
         style={{

@@ -6,6 +6,7 @@ import { courses } from "@/app/data/courses";
 import { CheckCircle2, Music4 } from "lucide-react";
 import { staggerContainer, fadeUp } from "@/app/lib/animations";
 import { useRef } from "react";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const LEVEL_COLORS: Record<string, { color: string; glow: string }> = {
   Beginner:     { color: "#10B981", glow: "rgba(16,185,129,0.3)" },
@@ -15,11 +16,19 @@ const LEVEL_COLORS: Record<string, { color: string; glow: string }> = {
 
 export const Courses = () => {
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], ["30px", "-30px"]);
+
+  // Disable parallax on mobile
+  const y = useTransform(
+    scrollYProgress,
+    [0, 1],
+    isMobile ? ["0px", "0px"] : ["30px", "-30px"]
+  );
 
   return (
     <section ref={sectionRef} id="courses" className="py-24 px-4 bg-surface relative overflow-hidden">
@@ -104,7 +113,7 @@ export const Courses = () => {
 
                     <div className="mt-auto">
                       <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-4">
-                        What you'll learn:
+                        What you&apos;ll learn:
                       </p>
                       <ul className="space-y-3">
                         {course.outcomes.map((outcome, i) => (

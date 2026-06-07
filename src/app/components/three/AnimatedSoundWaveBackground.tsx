@@ -1,79 +1,109 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { shaderMaterial } from "@react-three/drei";
+import { extend } from "@react-three/fiber";
 import * as THREE from "three";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 /**
- * AnimatedSoundWaveBackground
- * A GPU-animated plane mesh that creates a flowing sine-wave
- * displacement across a full-screen background quad.
- * Purple-to-gold gradient via vertex colors.
+ * AnimatedSoundWaveBackground — GPU-driven wave displacement.
+ *
+ * Previous implementation: iterated over every vertex on CPU each frame,
+ * calling Math.sin/cos ~6,561 times, then uploaded the buffer via
+ * `needsUpdate = true` — causing a large CPU→GPU data transfer every tick.
+ *
+ * New implementation: the plane geometry is static. The wave math is done
+ * entirely inside the GLSL vertex shader, which runs in parallel on
+ * thousands of GPU shader cores — zero CPU→GPU buffer uploads per frame.
  */
+
+// ── Custom shader material ──────────────────────────────────────────────────
+const WaveBackgroundMaterial = shaderMaterial(
+  // Uniforms
+  { uTime: 0 },
+  // Vertex shader — calculates multi-freq sine displacement on GPU
+  /*glsl*/ `
+    uniform float uTime;
+    varying vec3 vColor;
+
+    // Purple (0.58, 0.20, 0.92) → Gold (0.83, 0.69, 0.14)
+    vec3 purple = vec3(0.58, 0.20, 0.92);
+    vec3 gold   = vec3(0.83, 0.69, 0.14);
+
+    void main() {
+      vec3 pos = position;
+
+      float t = (pos.x + 30.0) / 60.0;                // 0..1
+      float edge = abs(t - 0.5) * 2.0;                // 0=center, 1=edge
+      vColor = mix(purple, gold, edge);
+
+      // Same wave formula as the original CPU version
+      pos.z =
+        sin(pos.x * 0.15 + uTime * 0.8) * 1.5 +
+        sin(pos.y * 0.20 + uTime * 0.6) * 1.0 +
+        cos(pos.x * 0.08 + pos.y * 0.12 + uTime * 0.4) * 0.8;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `,
+  // Fragment shader — use vertex color interpolated from above
+  /*glsl*/ `
+    varying vec3 vColor;
+
+    void main() {
+      gl_FragColor = vec4(vColor, 0.08);
+    }
+  `
+);
+
+// Register the material so JSX can use <waveBackgroundMaterial>
+extend({ WaveBackgroundMaterial });
+
+// TypeScript declaration for the custom JSX element
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    waveBackgroundMaterial: {
+      ref?: React.Ref<THREE.ShaderMaterial & { uTime: number }>;
+      uTime?: number;
+      attach?: string;
+      transparent?: boolean;
+      wireframe?: boolean;
+      side?: THREE.Side;
+      depthWrite?: boolean;
+    };
+  }
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
 export const AnimatedSoundWaveBackground = () => {
-  const meshRef = useRef<THREE.Mesh>(null!);
+  const matRef = useRef<THREE.ShaderMaterial & { uTime: number }>(null!);
+  const isMobile = useIsMobile();
 
-  const { geometry, colorArray } = useMemo(() => {
-    const segments = 80;
-    const geo = new THREE.PlaneGeometry(60, 40, segments, segments);
+  // Fewer segments on mobile — reduces vertex count
+  const segments = isMobile ? 30 : 50;
 
-    // Per-vertex colors: purple in center, gold toward edges
-    const posArr = geo.attributes.position.array as Float32Array;
-    const count = posArr.length / 3;
-    const colors = new Float32Array(count * 3);
+  const geometry = useMemo(
+    () => new THREE.PlaneGeometry(60, 40, segments, segments),
+    [segments]
+  );
 
-    for (let i = 0; i < count; i++) {
-      const x = posArr[i * 3];
-      const normalizedX = (x + 30) / 60; // 0..1
-      const t = Math.abs(normalizedX - 0.5) * 2; // 0=center, 1=edge
-
-      // Purple (0.58, 0.2, 0.92) → Gold (0.83, 0.69, 0.14)
-      colors[i * 3]     = 0.58 + t * (0.83 - 0.58);
-      colors[i * 3 + 1] = 0.20 + t * (0.69 - 0.20);
-      colors[i * 3 + 2] = 0.92 + t * (0.14 - 0.92);
-    }
-
-    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-
-    return { geometry: geo, colorArray: colors };
-  }, []);
-
+  // Update only the uTime uniform — zero buffer uploads
   useFrame(({ clock }) => {
-    const time = clock.getElapsedTime();
-    const geo = meshRef.current?.geometry;
-    if (!geo) return;
-
-    const pos = geo.attributes.position.array as Float32Array;
-    const count = pos.length / 3;
-
-    for (let i = 0; i < count; i++) {
-      const x = pos[i * 3];
-      const y = pos[i * 3 + 1];
-
-      // Multi-frequency wave displacement on Z
-      pos[i * 3 + 2] =
-        Math.sin(x * 0.15 + time * 0.8) * 1.5 +
-        Math.sin(y * 0.2 + time * 0.6) * 1.0 +
-        Math.cos(x * 0.08 + y * 0.12 + time * 0.4) * 0.8;
+    if (matRef.current) {
+      matRef.current.uTime = clock.getElapsedTime();
     }
-
-    geo.attributes.position.needsUpdate = true;
-    geo.computeVertexNormals();
   });
 
   return (
-    <mesh
-      ref={meshRef}
-      geometry={geometry}
-      position={[0, 0, -12]}
-      rotation={[-0.15, 0, 0]}
-    >
-      <meshPhongMaterial
-        vertexColors
+    <mesh geometry={geometry} position={[0, 0, -12]} rotation={[-0.15, 0, 0]}>
+      <waveBackgroundMaterial
+        ref={matRef}
         transparent
-        opacity={0.08}
         wireframe
         side={THREE.DoubleSide}
+        depthWrite={false}
       />
     </mesh>
   );

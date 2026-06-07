@@ -7,25 +7,38 @@ import { AchievementCarousel } from "../three/AchievementOrbit";
 import { SectionHeader } from "../ui/SectionHeader";
 import { achievements } from "@/app/data/achievements";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useInView } from "react-intersection-observer";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 export const Achievements3D = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const isMobile = useIsMobile();
 
   const prev = useCallback(() => {
-    setActiveIndex(i => (i - 1 + achievements.length) % achievements.length);
+    setActiveIndex((i) => (i - 1 + achievements.length) % achievements.length);
   }, []);
 
   const next = useCallback(() => {
-    setActiveIndex(i => (i + 1) % achievements.length);
+    setActiveIndex((i) => (i + 1) % achievements.length);
   }, []);
 
   const active = achievements[activeIndex];
+
+  // Only mount and run the 3D Canvas when this section is near the viewport.
+  // rootMargin: "200px" starts rendering slightly before it scrolls into view
+  // so there is no pop-in. When offscreen the Canvas is fully unmounted,
+  // freeing its GPU context and stopping its render loop entirely.
+  const { ref: inViewRef, inView } = useInView({
+    rootMargin: "200px 0px",
+    triggerOnce: false, // allow re-mounting if user scrolls back
+  });
 
   return (
     <section
       id="achievements"
       className="py-24 px-4 bg-surface relative overflow-hidden"
       style={{ minHeight: "860px" }}
+      ref={inViewRef}
     >
       {/* Background glow */}
       <div
@@ -47,28 +60,37 @@ export const Achievements3D = () => {
       </div>
 
       {/*
-       * 3D Coverflow Canvas
-       * Camera is front-facing (no Y elevation) so cards are perfectly centred.
-       * fov 58 gives a natural wide-angle that shows adjacent cards.
-       * position.z = 8 keeps cards large without perspective distortion.
+       * 3D Coverflow Canvas — only mounted when near/in viewport.
+       * When offscreen, renders a lightweight placeholder to preserve layout.
        */}
       <div
         className="absolute left-0 right-0 z-0"
         style={{ top: "130px", bottom: "160px" }}
       >
-        <Canvas
-          camera={{ position: [0, 0.2, 6.5], fov: 62 }}
-          dpr={[1, 2]}
-          gl={{ antialias: true, alpha: true }}
-          style={{ width: "100%", height: "100%" }}
-        >
-          <Suspense fallback={null}>
-            <AchievementCarousel
-              activeIndex={activeIndex}
-              onSelect={setActiveIndex}
-            />
-          </Suspense>
-        </Canvas>
+        {inView ? (
+          <Canvas
+            camera={{ position: [0, 0.2, 6.5], fov: 62 }}
+            dpr={isMobile ? 1 : [1, 1.5]}
+            gl={{
+              antialias: !isMobile,
+              alpha: true,
+              powerPreference: "high-performance",
+            }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <Suspense fallback={null}>
+              <AchievementCarousel
+                activeIndex={activeIndex}
+                onSelect={setActiveIndex}
+              />
+            </Suspense>
+          </Canvas>
+        ) : (
+          /* Lightweight skeleton shown while section is offscreen */
+          <div className="w-full h-full flex items-center justify-center opacity-20">
+            <div className="w-48 h-64 rounded-2xl border border-secondary/20 bg-secondary/5" />
+          </div>
+        )}
       </div>
 
       {/* ── Navigation ── */}
@@ -160,15 +182,13 @@ export const Achievements3D = () => {
       <div
         className="absolute inset-x-0 top-0 h-28 pointer-events-none z-10"
         style={{
-          background:
-            "linear-gradient(to bottom, #050505 0%, transparent 100%)",
+          background: "linear-gradient(to bottom, #050505 0%, transparent 100%)",
         }}
       />
       <div
         className="absolute inset-x-0 bottom-0 h-36 pointer-events-none z-10"
         style={{
-          background:
-            "linear-gradient(to top, #050505 0%, transparent 100%)",
+          background: "linear-gradient(to top, #050505 0%, transparent 100%)",
         }}
       />
     </section>

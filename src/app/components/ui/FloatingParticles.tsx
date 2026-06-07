@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-
-interface Particle {
-  x: number;
-  y: number;
-  size: number;
-  speedY: number;
-  speedX: number;
-  opacity: number;
-  color: string;
-  delay: number;
-  duration: number;
-}
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const COLORS = [
   "rgba(212,175,55,",   // gold
@@ -24,60 +13,70 @@ const COLORS = [
 
 export const FloatingParticles = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    // Fewer particles on mobile — reduces DOM size and paint cost
+    const count = isMobile ? 15 : 30;
     const particles: HTMLDivElement[] = [];
-    const count = 55;
+
+    // Consolidate all keyframes into ONE style tag instead of 55 separate ones
+    let keyframeCSS = "";
 
     for (let i = 0; i < count; i++) {
-      const el = document.createElement("div");
       const color = COLORS[Math.floor(Math.random() * COLORS.length)];
       const size = 2 + Math.random() * 5;
       const x = Math.random() * 100;
       const y = Math.random() * 100;
       const duration = 6 + Math.random() * 10;
       const delay = Math.random() * -12;
-      const driftX = (Math.random() - 0.5) * 60;
-      const driftY = -(30 + Math.random() * 80);
+      const driftX = (Math.random() - 0.5) * (isMobile ? 30 : 60);
+      const driftY = -(30 + Math.random() * (isMobile ? 50 : 80));
       const opacity = 0.2 + Math.random() * 0.5;
+      // On mobile skip the glow box-shadow — expensive rasterization
+      const shadowVal = isMobile ? "none" : `0 0 ${size * 2}px ${color}${opacity * 0.5})`;
 
-      el.style.cssText = `
-        position: absolute;
-        left: ${x}%;
-        top: ${y}%;
-        width: ${size}px;
-        height: ${size}px;
-        border-radius: 50%;
-        background: ${color}${opacity});
-        pointer-events: none;
-        will-change: transform, opacity;
-        box-shadow: 0 0 ${size * 2}px ${color}${opacity * 0.5});
-        animation: particle-float-${i} ${duration}s ease-in-out ${delay}s infinite;
-      `;
-
-      // inject keyframe
-      const style = document.createElement("style");
-      style.textContent = `
-        @keyframes particle-float-${i} {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          10%  { opacity: ${opacity}; }
-          50%  { transform: translate(${driftX * 0.5}px, ${driftY * 0.5}px) scale(1.2); opacity: ${opacity * 0.8}; }
-          90%  { opacity: ${opacity * 0.4}; }
-          100% { transform: translate(${driftX}px, ${driftY}px) scale(0.6); opacity: 0; }
+      keyframeCSS += `
+        @keyframes pfloat-${i} {
+          0%   { transform: translate(0,0) scale(1); opacity:0; }
+          10%  { opacity:${opacity}; }
+          50%  { transform: translate(${driftX * 0.5}px,${driftY * 0.5}px) scale(1.2); opacity:${opacity * 0.8}; }
+          90%  { opacity:${opacity * 0.4}; }
+          100% { transform: translate(${driftX}px,${driftY}px) scale(0.6); opacity:0; }
         }
       `;
-      document.head.appendChild(style);
+
+      const el = document.createElement("div");
+      el.style.cssText = `
+        position:absolute;
+        left:${x}%;
+        top:${y}%;
+        width:${size}px;
+        height:${size}px;
+        border-radius:50%;
+        background:${color}${opacity});
+        pointer-events:none;
+        will-change:transform,opacity;
+        box-shadow:${shadowVal};
+        animation:pfloat-${i} ${duration}s ease-in-out ${delay}s infinite;
+      `;
       container.appendChild(el);
       particles.push(el);
     }
 
+    // Single style element for all keyframes
+    const styleEl = document.createElement("style");
+    styleEl.textContent = keyframeCSS;
+    document.head.appendChild(styleEl);
+
     return () => {
-      particles.forEach(p => p.remove());
+      particles.forEach((p) => p.remove());
+      styleEl.remove();
     };
-  }, []);
+  }, [isMobile]);
 
   return (
     <div

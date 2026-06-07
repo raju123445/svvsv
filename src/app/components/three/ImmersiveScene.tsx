@@ -7,14 +7,28 @@ import { SoundWaveRibbon } from "./SoundWave";
 import { Veena3D } from "./Veena3D";
 import { AnimatedSoundWaveBackground } from "./AnimatedSoundWaveBackground";
 import { Environment, Sparkles } from "@react-three/drei";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 export const ImmersiveScene = () => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="fixed inset-0 -z-20 bg-surface">
       <Canvas
         camera={{ position: [0, 0, 15], fov: 50 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true, stencil: false, depth: true }}
+        // ── DPR: cap at 1 on mobile to halve the number of pixels drawn ──
+        dpr={isMobile ? 1 : [1, 1.5]}
+        gl={{
+          // Disable antialiasing on mobile — large MSAA overhead for tiny screens
+          antialias: !isMobile,
+          alpha: true,
+          stencil: false,
+          depth: true,
+          // Prefer high-performance GPU on hybrid systems
+          powerPreference: "high-performance",
+        }}
+        // Adaptive pixel ratio: drops DPR when FPS falls below 40
+        performance={{ min: 0.5 }}
       >
         <Suspense fallback={null}>
           <color attach="background" args={["#03000A"]} />
@@ -61,12 +75,12 @@ export const ImmersiveScene = () => {
             <SoundWaveRibbon />
           </group>
 
-          {/* ── 50+ Floating Notes ── */}
+          {/* ── Floating Notes — count adapts to device ── */}
           <FloatingNotes />
 
-          {/* ── Gold Sparkle Layer ── */}
+          {/* ── Gold Sparkle Layer — massively reduced on mobile ── */}
           <Sparkles
-            count={300}
+            count={isMobile ? 30 : 120}
             scale={35}
             size={1.8}
             speed={0.3}
@@ -74,9 +88,9 @@ export const ImmersiveScene = () => {
             opacity={0.35}
           />
 
-          {/* ── Purple Sparkle Layer ── */}
+          {/* ── Purple Sparkle Layer — massively reduced on mobile ── */}
           <Sparkles
-            count={150}
+            count={isMobile ? 15 : 60}
             scale={28}
             size={1.2}
             speed={0.5}

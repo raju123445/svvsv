@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useRef, useMemo } from "react";
 import { Float, Text } from "@react-three/drei";
 import * as THREE from "three";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const SYMBOLS = ["♩", "♫", "♬", "♭", "♯", "𝄞", "♪", "𝄢", "𝄡"];
 const COLORS_GOLD   = ["#D4AF37", "#F59E0B", "#FCD34D", "#FBBF24"];
@@ -14,11 +15,14 @@ interface NoteData {
   rotation: [number, number, number];
   scale: number;
   symbol: string;
-  colorBase: string;
-  colorTarget: string;
+  colorBase: THREE.Color;    // Pre-allocated THREE.Color (no GC churn)
+  colorTarget: THREE.Color;  // Pre-allocated THREE.Color
   phaseOffset: number;
   speed: number;
 }
+
+// Module-level scratch color reused every frame (zero allocations in useFrame)
+const _scratch = new THREE.Color();
 
 const MusicalNote = ({ data }: { data: NoteData }) => {
   const textRef = useRef<any>(null!);
@@ -28,15 +32,12 @@ const MusicalNote = ({ data }: { data: NoteData }) => {
     const t = clock.getElapsedTime() * data.speed + data.phaseOffset;
 
     // Cycle opacity: breathe between 0.15 and 0.65
-    const opacity = 0.15 + (Math.sin(t) * 0.5 + 0.5) * 0.5;
-    textRef.current.fillOpacity = opacity;
+    textRef.current.fillOpacity = 0.15 + (Math.sin(t) * 0.5 + 0.5) * 0.5;
 
-    // Color cycling between gold and purple families
-    const lerp = (Math.sin(t * 0.3) * 0.5 + 0.5);
-    const c1 = new THREE.Color(data.colorBase);
-    const c2 = new THREE.Color(data.colorTarget);
-    c1.lerp(c2, lerp);
-    textRef.current.color = c1;
+    // Color cycling — reuse _scratch, never allocate inside the frame loop
+    const lerp = Math.sin(t * 0.3) * 0.5 + 0.5;
+    _scratch.copy(data.colorBase).lerp(data.colorTarget, lerp);
+    textRef.current.color = _scratch;
   });
 
   return (
@@ -50,7 +51,7 @@ const MusicalNote = ({ data }: { data: NoteData }) => {
         position={data.position}
         rotation={data.rotation}
         scale={data.scale}
-        color={data.colorBase}
+        color={data.colorBase.getHexString()}
         anchorX="center"
         anchorY="middle"
         fillOpacity={0.3}
@@ -63,9 +64,21 @@ const MusicalNote = ({ data }: { data: NoteData }) => {
 };
 
 export const FloatingNotes = () => {
+  const isMobile = useIsMobile();
+
   const notes = useMemo<NoteData[]>(() => {
-    return Array.from({ length: 100 }).map((_, i) => {
+    // Fewer notes on mobile — each note has its own useFrame and Float animation
+    const count = isMobile ? 15 : 40;
+
+    return Array.from({ length: count }).map((_, i) => {
       const isGold = i % 2 === 0;
+      const baseHex = isGold
+        ? COLORS_GOLD[Math.floor(Math.random() * COLORS_GOLD.length)]
+        : COLORS_PURPLE[Math.floor(Math.random() * COLORS_PURPLE.length)];
+      const targetHex = isGold
+        ? COLORS_PURPLE[Math.floor(Math.random() * COLORS_PURPLE.length)]
+        : COLORS_GOLD[Math.floor(Math.random() * COLORS_GOLD.length)];
+
       return {
         position: [
           (Math.random() - 0.5) * 30,
@@ -79,17 +92,14 @@ export const FloatingNotes = () => {
         ] as [number, number, number],
         scale: 0.6 + Math.random() * 2.2,
         symbol: SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        colorBase: isGold
-          ? COLORS_GOLD[Math.floor(Math.random() * COLORS_GOLD.length)]
-          : COLORS_PURPLE[Math.floor(Math.random() * COLORS_PURPLE.length)],
-        colorTarget: isGold
-          ? COLORS_PURPLE[Math.floor(Math.random() * COLORS_PURPLE.length)]
-          : COLORS_GOLD[Math.floor(Math.random() * COLORS_GOLD.length)],
+        // Pre-allocate THREE.Color objects in useMemo — never in useFrame
+        colorBase: new THREE.Color(baseHex),
+        colorTarget: new THREE.Color(targetHex),
         phaseOffset: Math.random() * Math.PI * 2,
         speed: 0.3 + Math.random() * 0.5,
       };
     });
-  }, []);
+  }, [isMobile]);
 
   return (
     <group>
